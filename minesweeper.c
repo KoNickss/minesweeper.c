@@ -81,7 +81,7 @@ short drawBoard(){
 			if(board[i][j] % 100 / 10 == 3) //is a questioned(is this a word?) square
 				printf("| %s?%s ", warn, reset);
 		}
-		printf("|\n     +---+---+---+---+---+---+---+---+---+--+\n");
+		printf("|\n     +---+---+---+---+---+---+---+---+---+---+\n");
 	}
 	if(squaresDug == 90){
 		printf("\n\nCongrats! You won!\n");
