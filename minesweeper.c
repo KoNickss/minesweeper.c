@@ -1,3 +1,6 @@
+//flags:
+typedef enum {false, true} bool;
+bool DEBUG = false;
 //This is free and unencumbered software released into the public domain.
 //
 //Anyone is free to copy, modify, publish, use, compile, sell, or
@@ -45,6 +48,7 @@ short board[10][10];
 #include <time.h>
 void boardInit(){
 	//fills board with zeros
+	if(DEBUG) printf("Filling board with 0 (10)s\n"); 
 	for(int i = 0; i < 10; i++)
 		for(int j = 0; j < 10; j++)
 			board[i][j] = 10;
@@ -59,6 +63,7 @@ short drawBoard(){
 	char warn[] = "\e[47m\e[0;33m";
 	printf("       0   1   2   3   4   5   6   7   8   9\n");
 	printf("       |   |   |   |   |   |   |   |   |   |\n");
+	printf("     +---+---+---+---+---+---+---+---+---+---+\n");
 	short squaresDug = 0; //this is our win detection right here, if by the end of the board printing all but 10 squares are dug (the 10 being the mines) the game is won
 	for(int i = 0; i < 10; i++){
 		printf("%d -> ", i);
@@ -149,10 +154,12 @@ void command(){
 }
 short plantMine(short x, short y){
 	//this plants a mine at xy then increases the value of each surrounding square by 1, so we're basically reverse-solving the game
+	if(DEBUG) printf("Planting mine at %d %d\n", x, y);
 	if(board[x][y] > 99){
 		srand(time(NULL) + rand());
 		x = (short)(rand() % 10);
 		y = (short)(rand() % 10);
+		if(DEBUG) printf("Planting mine failed, retrying at %d %d\n", x, y);
 		plantMine(x, y);
 		return 1;
 	}
@@ -170,9 +177,9 @@ int main(){
 	boardInit();
 	short x, y;
 	for(int i = 0; i < 10; i++){
-		plantMine(x, y);
 		x = (short)(rand() % 10);
 		y = (short)(rand() % 10);
+		plantMine(x, y);
 	}
 	short game = 0;
 	while(1){
