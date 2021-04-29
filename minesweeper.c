@@ -55,7 +55,7 @@ void boardInit(){
 	
 	return;
 }
-short drawBoard(){
+bool drawBoard(){
 	char reset[] = "\e[0m";
 	char tile[] = "\e[47m\e[1;30m";
 	char shown[] = "\e[40m\e[0;32m";
@@ -74,7 +74,7 @@ short drawBoard(){
 			if(board[i][j] % 100 / 10 == 0){ //is a shown square
 				if(board[i][j] > 99){ //this is our loss detection, I implemeted it here and not in the dig function because it's cool seeing a broken-up board with the message game over
 					printf("\nGame Over!\n");
-					return 1;
+					return true;
 				}else{
 					printf("| %s%d%s ", shown, board[i][j], reset);
 					squaresDug++;
@@ -90,16 +90,16 @@ short drawBoard(){
 	}
 	if(squaresDug == 90){
 		printf("\n\nCongrats! You won!\n");
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
-short areEqual(char str1[], char str2[]){
+bool areEqual(char str1[], char str2[]){
 	for(int i = 0; str1[i] == str2[i]; i++)
 		if(str1[i] == '\0')
-			return 1;
+			return true;
 
-	return 0;
+	return false;
 }
 void recurseZero(short x, short y){
 	for(short i = x - 1; i < x + 2; i++){
@@ -152,7 +152,7 @@ void command(){
 	if(arg[0] == 'w') warnTile(ux, uy);
 	return;
 }
-short plantMine(short x, short y){
+bool plantMine(short x, short y){
 	//this plants a mine at xy then increases the value of each surrounding square by 1, so we're basically reverse-solving the game
 	if(DEBUG) printf("Planting mine at %d %d\n", x, y);
 	if(board[x][y] > 99){
@@ -161,7 +161,7 @@ short plantMine(short x, short y){
 		y = (short)(rand() % 10);
 		if(DEBUG) printf("Planting mine failed, retrying at %d %d\n", x, y);
 		plantMine(x, y);
-		return 1;
+		return true;
 	}
 	for(short i = x - 1; i < x + 2; i++){
 		for(short j = y - 1; j < y + 2; j++){
@@ -170,7 +170,7 @@ short plantMine(short x, short y){
 		}
 	}
 	board[x][y] = 110;
-	return 0;
+	return false;
 }
 int main(){
 	srand(time(NULL));
@@ -181,7 +181,7 @@ int main(){
 		y = (short)(rand() % 10);
 		plantMine(x, y);
 	}
-	short game = 0;
+	bool game = false;
 	while(1){
 		game = drawBoard();
 		if(game != 0) break;
