@@ -29,7 +29,7 @@ bool DEBUG = false;
 //
 //Made by KoNicks
 //
-short board[10][10];
+char board[10][10];
 //
 //quick explanation:
 //so let x be the number displayed on the tile if visible or 100 if the square is a mine
@@ -64,7 +64,7 @@ bool drawBoard(){
 	printf("       0   1   2   3   4   5   6   7   8   9\n");
 	printf("       |   |   |   |   |   |   |   |   |   |\n");
 	printf("     +---+---+---+---+---+---+---+---+---+---+\n");
-	short squaresDug = 0; //this is our win detection right here, if by the end of the board printing all but 10 squares are dug (the 10 being the mines) the game is won
+	char squaresDug = 0; //this is our win detection right here, if by the end of the board printing all but 10 squares are dug (the 10 being the mines) the game is won
 	for(int i = 0; i < 10; i++){
 		printf("%d -> ", i);
 		for(int j = 0; j < 10; j++){
@@ -101,9 +101,9 @@ bool areEqual(char str1[], char str2[]){
 
 	return false;
 }
-void recurseZero(short x, short y){
-	for(short i = x - 1; i < x + 2; i++){
-		for(short j = y - 1; j < y + 2; j++){
+void recurseZero(char x, char y){
+	for(char i = x - 1; i < x + 2; i++){
+		for(char j = y - 1; j < y + 2; j++){
 			if(i > -1 && i < 10 && j > -1 && j < 10){
 				if(board[i][j] == 10 && i != x && j != y)
 					recurseZero(i, j);
@@ -117,21 +117,21 @@ void recurseZero(short x, short y){
 	return;
 
 }
-void digTile(short ux, short uy){
+void digTile(char ux, char uy){
 	while(board[ux][uy] % 100 / 10 != 0)
 			board[ux][uy] -= 10;
 	
 	if (board[ux][uy] == 0) recurseZero(ux, uy);
 	return;
 }
-void flagTile(short ux, short uy){
+void flagTile(char ux, char uy){
 	while(board[ux][uy] % 100 / 10 != 2){
 			if(board[ux][uy] % 100 / 10 > 2) board[ux][uy] -= 10;
 			else board[ux][uy] += 10;
 	}
 	return;
 }
-void warnTile(short ux, short uy){
+void warnTile(char ux, char uy){
 	while(board[ux][uy] % 100 / 10 != 3){
 			if(board[ux][uy] % 100 / 10 > 3) board[ux][uy] -= 10;
 			else board[ux][uy] += 10;
@@ -143,8 +143,8 @@ void command(){
 	printf("\nSelect an action:\n[dxy -> dig square]\n[fxy -> flag square]\n[wxy -> put a question flag on the square]\n:: ");
 	char arg[5];
 	scanf("%s", arg);
-	short ux, uy;
-	//convert the chars into shorts
+	char ux, uy;
+	//convert the chars into chars
 	ux = arg[2] - '0';
 	uy = arg[1] - '0';
 	if(arg[0] == 'd') digTile(ux, uy);
@@ -152,19 +152,19 @@ void command(){
 	if(arg[0] == 'w') warnTile(ux, uy);
 	return;
 }
-bool plantMine(short x, short y){
+bool plantMine(char x, char y){
 	//this plants a mine at xy then increases the value of each surrounding square by 1, so we're basically reverse-solving the game
 	if(DEBUG) printf("Planting mine at %d %d\n", x, y);
 	if(board[x][y] > 99){
 		srand(time(NULL) + rand());
-		x = (short)(rand() % 10);
-		y = (short)(rand() % 10);
+		x = (char)(rand() % 10);
+		y = (char)(rand() % 10);
 		if(DEBUG) printf("Planting mine failed, retrying at %d %d\n", x, y);
 		plantMine(x, y);
 		return true;
 	}
-	for(short i = x - 1; i < x + 2; i++){
-		for(short j = y - 1; j < y + 2; j++){
+	for(char i = x - 1; i < x + 2; i++){
+		for(char j = y - 1; j < y + 2; j++){
 			if(i > -1 && i < 10 && j > -1 && j < 10)
 				board[i][j]++;
 		}
@@ -175,10 +175,10 @@ bool plantMine(short x, short y){
 int main(){
 	srand(time(NULL));
 	boardInit();
-	short x, y;
+	char x, y;
 	for(int i = 0; i < 10; i++){
-		x = (short)(rand() % 10);
-		y = (short)(rand() % 10);
+		x = (char)(rand() % 10);
+		y = (char)(rand() % 10);
 		plantMine(x, y);
 	}
 	bool game = false;
