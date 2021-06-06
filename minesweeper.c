@@ -55,12 +55,21 @@ void boardInit(){
 	
 	return;
 }
-bool drawBoard(){
+bool drawBoard(char color){
 	char reset[] = "\e[0m";
 	char tile[] = "\e[47m\e[1;30m";
 	char shown[] = "\e[40m\e[0;32m";
 	char flag[] = "\e[47m\e[0;31m";
 	char warn[] = "\e[47m\e[0;33m";
+
+	if(!color){
+		if(DEBUG) printf("\nColorless mode %d\n", color);
+		for(int i=0; i < sizeof(reset)/sizeof(char); i++) reset[i] = '\0';
+		for(int i=0; i < sizeof(tile)/sizeof(char); i++) tile[i] = '\0';
+		for(int i=0; i < sizeof(shown)/sizeof(char); i++) shown[i] = '\0';
+		for(int i=0; i < sizeof(flag)/sizeof(char); i++) flag[i] = '\0';
+		for(int i=0; i < sizeof(warn)/sizeof(char); i++) warn[i] = '\0';
+	}
 	printf("       0   1   2   3   4   5   6   7   8   9\n");
 	printf("       |   |   |   |   |   |   |   |   |   |\n");
 	printf("     +---+---+---+---+---+---+---+---+---+---+\n");
@@ -172,10 +181,19 @@ bool plantMine(char x, char y){
 	board[x][y] = 110;
 	return false;
 }
-int main(){
+int main(int argc, char *argv[]){
 	srand(time(NULL));
 	boardInit();
 	char x, y;
+	bool color = 1;
+
+	//get flags
+	char option;
+	while((option = getopt(argc, argv, ":c")) != -1){
+		if(option == 'c') color = 0;
+		if(DEBUG) printf("\nRegistered flag %c\n", option);
+	}
+
 	for(int i = 0; i < 10; i++){
 		x = (char)(rand() % 10);
 		y = (char)(rand() % 10);
@@ -183,7 +201,7 @@ int main(){
 	}
 	bool game = false;
 	while(1){
-		game = drawBoard();
+		game = drawBoard(color);
 		if(game != 0) break;
 		command();
 	}
