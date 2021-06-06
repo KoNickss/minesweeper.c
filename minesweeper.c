@@ -1,6 +1,8 @@
 //flags:
 typedef enum {false, true} bool;
-bool DEBUG = false;
+
+bool DEBUG = false; //enable this to get debug messages, useful when developing, but please flip it back around when done
+
 //This is free and unencumbered software released into the public domain.
 //
 //Anyone is free to copy, modify, publish, use, compile, sell, or
@@ -36,14 +38,14 @@ char board[10][10];
 //inside the array, if the value for that square is equal to X that means the square is visible
 //keep in mind X cannot possibly be bigger than 8
 //if the value is 10 + X (so if the tens digit is one) it is a hidden tile, to display it we simply substract 10 from it and display that
-//from this we can deduct that if at any given time there is a tile with a value bigger than 99 and smaller than 109, a mine has been exposed and the game ends
+//from this we can deduct that if at any given time there is a tile with a value bigger than 99 and smaller than 109, a mine has been exposed and the game ends (a hidden non-activated mine being 10 + X, so 110, the number may vary due to any incrementations caused by surrounding mines, but it's never gonna be bigger than 118)
 //again, since X may never be bigger than 8, a value will never overflow from shown to hidden or in any other category since 8 is smaller than 10 and we look for the tens place
 //in the same manner, 20 + X means the tile is hidden and has a flag on it
 //and 30 + X means the tile is hidden and has a question flag on it
-//this system is not very efficient and the win detection is going to be complicated af
+//this system is not very efficient and the win detection is going to be complicated af (comment from future me: it wasnt lmao)
 //but it was my original idea and copying someone's method would destroy the fun really;
 //also it allows for efficient use of memory and consistent tile rules
-//it also allows us to make a zero-tile dig recursion with extreme ease
+//it also allows us to make a zero-tile dig recursion with extreme ease (just check for places in the neighbouring squares where the value in the array is 10, '10' meaning hidden (10) + zero (0), so hidden zero)
 #include <stdio.h>
 #include <time.h>
 void boardInit(){
@@ -56,13 +58,14 @@ void boardInit(){
 	return;
 }
 bool drawBoard(char color){
+	//ASCII color codes, this is how we make stuff colorful on unix terminals
 	char reset[] = "\e[0m";
 	char tile[] = "\e[47m\e[1;30m";
 	char shown[] = "\e[40m\e[0;32m";
 	char flag[] = "\e[47m\e[0;31m";
 	char warn[] = "\e[47m\e[0;33m";
 
-	if(!color){
+	if(!color){ //and this is how we rid it of all color, empty the chars containing the color codes to null bytes, so it goes monochrome, this is made so it can be played on windows terminals, as they dont support ASCII color codes
 		if(DEBUG) printf("\nColorless mode %d\n", color);
 		for(int i=0; i < sizeof(reset)/sizeof(char); i++) reset[i] = '\0';
 		for(int i=0; i < sizeof(tile)/sizeof(char); i++) tile[i] = '\0';
@@ -81,12 +84,13 @@ bool drawBoard(char color){
 				printf("| %s#%s ", tile, reset);
 			
 			if(board[i][j] % 100 / 10 == 0){ //is a shown square
-				if(board[i][j] > 99){ //this is our loss detection, I implemeted it here and not in the dig function because it's cool seeing a broken-up board with the message game over
+				if(board[i][j] > 99){ //this is our loss detection, if it's a shown square (see line above) and it's bigger than 99 than it's a mine, a mined mine to be more precise, so a loss
 					printf("\nGame Over!\n");
 					return true;
 				}else{
-					printf("| %s%d%s ", shown, board[i][j], reset);
-					squaresDug++;
+					if(board[i][j] != 0) printf("| %s%d%s ", shown, board[i][j], reset); //this is a shown square, we're gonna display it's value
+					else printf("| %s %s ", shown, reset); //this is a shown zero, so we're gonna show it as an empty square
+					squaresDug++; //and this is our win detection, if all 90 non-mine squares are shown (have been dug) we end the game, this just counts up each time it encounters a shown square
 				}
 			}
 			if(board[i][j] % 100 / 10 == 2) //is a flagged square
@@ -113,12 +117,14 @@ bool areEqual(char str1[], char str2[]){
 void recurseZero(char x, char y){
 	for(char i = x - 1; i < x + 2; i++){
 		for(char j = y - 1; j < y + 2; j++){
-			if(i > -1 && i < 10 && j > -1 && j < 10){
-				if(board[i][j] == 10 && i != x && j != y)
+			if(i > -1 && i < 10 && j > -1 && j < 10){ //check if out of bounds
+				if(board[i][j] == 10 && (i != x || j != y)) //check if tile is hidden zero (see comment chunk at the top) and if it isn't itself to prevent recursion
 					recurseZero(i, j);
 
-				while(board[i][j] % 100 / 10 != 0)
-					board[i][j] -= 10;
+				while(board[i][j] % 100 / 10 != 0) //until tile is shown
+					board[i][j] -= 10; //substract 10
+				
+				//this is for any non-zero tiles around the perimiter, they need to be cleared too
 			}
 		}
 	}
@@ -127,21 +133,21 @@ void recurseZero(char x, char y){
 
 }
 void digTile(char ux, char uy){
-	while(board[ux][uy] % 100 / 10 != 0)
+	while(board[ux][uy] % 100 / 10 != 0) //see comment chunck at the top, if tens place isnt 0, make it, thats how you dig a tile
 			board[ux][uy] -= 10;
 	
-	if (board[ux][uy] == 0) recurseZero(ux, uy);
+	if (board[ux][uy] == 0) recurseZero(ux, uy); //collapse the zero cave if a zero is encountered
 	return;
 }
 void flagTile(char ux, char uy){
-	while(board[ux][uy] % 100 / 10 != 2){
+	while(board[ux][uy] % 100 / 10 != 2){ //same principle as dig
 			if(board[ux][uy] % 100 / 10 > 2) board[ux][uy] -= 10;
 			else board[ux][uy] += 10;
 	}
 	return;
 }
 void warnTile(char ux, char uy){
-	while(board[ux][uy] % 100 / 10 != 3){
+	while(board[ux][uy] % 100 / 10 != 3){ //see above
 			if(board[ux][uy] % 100 / 10 > 3) board[ux][uy] -= 10;
 			else board[ux][uy] += 10;
 	}
@@ -164,7 +170,7 @@ void command(){
 bool plantMine(char x, char y){
 	//this plants a mine at xy then increases the value of each surrounding square by 1, so we're basically reverse-solving the game
 	if(DEBUG) printf("Planting mine at %d %d\n", x, y);
-	if(board[x][y] > 99){
+	if(board[x][y] > 99){ //if a mine is already there, try another spot
 		srand(time(NULL) + rand());
 		x = (char)(rand() % 10);
 		y = (char)(rand() % 10);
@@ -175,16 +181,16 @@ bool plantMine(char x, char y){
 	for(char i = x - 1; i < x + 2; i++){
 		for(char j = y - 1; j < y + 2; j++){
 			if(i > -1 && i < 10 && j > -1 && j < 10)
-				board[i][j]++;
+				board[i][j]++; //for all surrounding squares, increase X by one, X being the numbers of mines in it's perimeter or 100 if mine
 		}
 	}
 	board[x][y] = 110;
 	return false;
 }
 int main(int argc, char *argv[]){
-	srand(time(NULL));
+	srand(time(NULL)); //generate random integer
 	boardInit();
-	char x, y;
+	char x, y; //allocate 2 bytes for the x and y variable, these will be used when calling the mine-planting func
 	bool color = 1;
 
 	//get flags
@@ -194,7 +200,7 @@ int main(int argc, char *argv[]){
 		if(DEBUG) printf("\nRegistered flag %c\n", option);
 	}
 
-	for(int i = 0; i < 10; i++){
+	for(int i = 0; i < 10; i++){ //plant 10 mines at random
 		x = (char)(rand() % 10);
 		y = (char)(rand() % 10);
 		plantMine(x, y);
